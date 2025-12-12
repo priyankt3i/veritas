@@ -9,7 +9,7 @@ import { generateInvestigativeReport } from './services/geminiService';
 import ReportView from './components/ReportView';
 import Loading from './components/Loading';
 import IntroScreen from './components/IntroScreen';
-import { Search, AlertCircle, FileText, Newspaper, Key, CreditCard, ExternalLink, DollarSign, PenTool, Archive } from 'lucide-react';
+import { Search, AlertCircle, PenTool, Archive } from 'lucide-react';
 
 const App: React.FC = () => {
   const [showIntro, setShowIntro] = useState(true);
@@ -23,10 +23,6 @@ const App: React.FC = () => {
   const [reportHistory, setReportHistory] = useState<Report[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(true);
 
-  // API Key State
-  const [hasApiKey, setHasApiKey] = useState(false);
-  const [checkingKey, setCheckingKey] = useState(true);
-
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -34,36 +30,6 @@ const App: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
-
-  useEffect(() => {
-    const checkKey = async () => {
-      try {
-        if (window.aistudio && window.aistudio.hasSelectedApiKey) {
-          const hasKey = await window.aistudio.hasSelectedApiKey();
-          setHasApiKey(hasKey);
-        } else {
-          setHasApiKey(true);
-        }
-      } catch (e) {
-        console.error("Error checking API key:", e);
-      } finally {
-        setCheckingKey(false);
-      }
-    };
-    checkKey();
-  }, []);
-
-  const handleSelectKey = async () => {
-    if (window.aistudio && window.aistudio.openSelectKey) {
-      try {
-        await window.aistudio.openSelectKey();
-        setHasApiKey(true);
-        setError(null);
-      } catch (e) {
-        console.error("Failed to open key selector:", e);
-      }
-    }
-  };
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,8 +52,7 @@ const App: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       if (err.message && (err.message.includes("Requested entity was not found") || err.message.includes("404") || err.message.includes("403"))) {
-          setError("Access denied. The selected API key does not have access to the required models. Please select a project with billing enabled.");
-          setHasApiKey(false); 
+          setError("Access denied. The server configuration might be invalid or the API key is missing permissions.");
       } else {
           setError('The investigation could not be completed. The connection was severed.');
       }
@@ -101,64 +66,8 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Modal for API Key Selection
-  const KeySelectionModal = () => (
-    <div className="fixed inset-0 z-[200] bg-zinc-950/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-        <div className="bg-[#f4f4f5] dark:bg-[#18181b] border-2 border-red-900/50 rounded-sm shadow-2xl max-w-md w-full p-6 md:p-8 relative overflow-hidden">
-             {/* Stamped Effect */}
-             <div className="absolute top-4 right-4 border-2 border-red-600 text-red-600 rounded p-1 px-2 text-[10px] font-bold uppercase tracking-widest opacity-50 -rotate-12">
-                Clearance Required
-            </div>
-
-            <div className="flex flex-col items-center text-center space-y-6">
-                <div className="w-16 h-16 bg-zinc-200 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-900 dark:text-zinc-100 mb-2 border-4 border-zinc-300 dark:border-zinc-700">
-                    <CreditCard className="w-6 h-6" />
-                </div>
-                
-                <div className="space-y-3">
-                    <h2 className="text-2xl font-headline font-bold text-zinc-900 dark:text-zinc-100">
-                        Paid API Access Required
-                    </h2>
-                    <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed font-serif">
-                        This investigative tool utilizes advanced Gemini 3 Pro models. 
-                    </p>
-                </div>
-
-                <div className="bg-zinc-100 dark:bg-zinc-900 border-l-4 border-red-600 p-4 w-full text-left">
-                    <div className="flex items-start gap-3">
-                         <div className="space-y-1">
-                            <p className="text-xs font-bold text-zinc-900 dark:text-zinc-200 uppercase tracking-wider">Billing Check</p>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                You must use a Google Cloud Project with billing enabled.
-                            </p>
-                             <a 
-                                href="https://ai.google.dev/gemini-api/docs/billing" 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 dark:text-blue-400 hover:underline mt-1"
-                            >
-                                Documentation <ExternalLink className="w-3 h-3" />
-                            </a>
-                         </div>
-                    </div>
-                </div>
-
-                <button 
-                    onClick={handleSelectKey}
-                    className="w-full py-3.5 bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-zinc-100 dark:text-zinc-900 rounded-sm font-bold shadow-lg transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
-                >
-                    <Key className="w-4 h-4" />
-                    <span>Authenticate</span>
-                </button>
-            </div>
-        </div>
-    </div>
-  );
-
   return (
     <>
-    {!checkingKey && !hasApiKey && <KeySelectionModal />}
-
     {showIntro ? (
       <IntroScreen onComplete={() => setShowIntro(false)} />
     ) : (
@@ -248,14 +157,6 @@ const App: React.FC = () => {
             <div className="flex-1">
                 <h3 className="font-bold text-red-900 dark:text-red-100 uppercase tracking-wide text-sm mb-1">Investigation Halted</h3>
                 <p className="text-red-800 dark:text-red-200 font-serif text-sm">{error}</p>
-                {(error.includes("Access denied")) && (
-                    <button 
-                        onClick={handleSelectKey}
-                        className="mt-3 text-xs font-bold bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 px-3 py-1 rounded hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                    >
-                        UPDATE CREDENTIALS
-                    </button>
-                )}
             </div>
           </div>
         )}
