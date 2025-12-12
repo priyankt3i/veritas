@@ -1,11 +1,11 @@
-<div align="center">
+# Veritas Report App
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+## Migration to Server-Side API
 
-  <h1>Built with AI Studio</h2>
+Currently, this application performs API calls directly from the browser for demonstration purposes. For a production application, you should move these calls to a backend server to protect your API key.
 
-  <p>The fastest path from prompt to production with Gemini.</p>
-
-  <a href="https://aistudio.google.com/apps">Start building</a>
-
-</div>
+1.  **Backend Setup**: Create a NodeJS server or Serverless function.
+2.  **Move Logic**: Copy the logic from `services/geminiService.ts` to your backend. Refer to `server/api.ts` for a template.
+3.  **Environment Variables**: set `API_KEY` in your backend environment.
+4.  **Update Frontend**: Modify `services/geminiService.ts` to `fetch` from your new backend endpoint instead of importing `GoogleGenAI` directly.
+5.  **Cleanup**: Delete `services/geminiService.ts` logic related to direct API calls.
