@@ -17,7 +17,7 @@ export default async function handler(request, response) {
     return response.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { topic } = JSON.parse(request.body);
+  const { topic } = request.body;
 
   if (!process.env.API_KEY) {
     return response.status(500).json({ error: 'Server API_KEY not configured' });
